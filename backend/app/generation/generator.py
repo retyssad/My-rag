@@ -115,3 +115,16 @@ def parse_citations(answer: str, chunks: list) -> list[Citation]:
 
 
 NO_RESULT_ANSWER = "抱歉，未能在知识库中找到与该问题相关的资料。"
+
+CHITCHAT_SYSTEM_PROMPT = """你是企业电商客服助手。用户当前的输入属于寒暄或与商品、售后无关的内容。
+请简短、礼貌地回应，并引导用户提出与商品或售后相关的问题。
+不要编造商品信息，不要引用任何资料。"""
+
+
+def build_chitchat_messages(query: str, history: list[dict] | None = None) -> list[dict]:
+    """chitchat 短路时的消息：不注入检索资料。"""
+    messages = [{"role": "system", "content": CHITCHAT_SYSTEM_PROMPT}]
+    if history:
+        messages.extend(history)
+    messages.append({"role": "user", "content": query})
+    return messages

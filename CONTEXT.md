@@ -41,6 +41,14 @@ _Avoid_: 精排、二次排序
 多轮对话中，结合历史补全 query 的指代与省略，使其可独立检索的预处理步骤。
 _Avoid_: 问题重写、query 扩展
 
+**意图识别 (Intent Recognition)**：
+在检索前判断问题所属类别（商品咨询 / 售后政策 / 商品对比 / 闲聊），用于调整检索参数或决定是否检索。
+_Avoid_: 意图分类、query 分类
+
+**软注入 (Soft Injection)**：
+意图识别只调整检索参数（如注入过滤、扩大召回），始终回退到统一检索链路的做法；与之相对的是按意图走不同链路的硬路由。
+_Avoid_: 参数覆盖、动态配置
+
 **文档处理状态 (Document Status)**：
 一份 Document 在入库流程中的位置：pending → processing → done / failed。
 _Avoid_: 任务状态、job state

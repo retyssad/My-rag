@@ -8,6 +8,7 @@ interface ChatMessage {
   citations?: Citation[]
   retrieved?: RetrievedChunk[]
   rewritten?: string | null
+  intent?: string | null
   streaming?: boolean
 }
 
@@ -22,6 +23,7 @@ const opts = ref({
   mode: 'hybrid' as ChatOptions['mode'],
   use_rerank: true,
   use_query_rewrite: true,
+  use_intent: true,
   product_category: '' as string,
   doc_type: '' as string,
 })
@@ -39,7 +41,12 @@ async function scrollToBottom() {
 }
 
 function buildOptions(): ChatOptions {
-  const o: ChatOptions = { mode: opts.value.mode, use_rerank: opts.value.use_rerank, use_query_rewrite: opts.value.use_query_rewrite }
+  const o: ChatOptions = {
+    mode: opts.value.mode,
+    use_rerank: opts.value.use_rerank,
+    use_query_rewrite: opts.value.use_query_rewrite,
+    use_intent: opts.value.use_intent,
+  }
   if (opts.value.product_category) o.product_category = opts.value.product_category
   if (opts.value.doc_type) o.doc_type = opts.value.doc_type
   return o
@@ -61,6 +68,7 @@ async function send(text?: string) {
         conversationId.value = data.conversation_id
         assistant.retrieved = data.chunks
         assistant.rewritten = data.query_rewritten
+        assistant.intent = data.intent
         scrollToBottom()
       },
       onDelta(t) {
@@ -100,6 +108,13 @@ const typeLabel: Record<string, string> = {
   policy: '售后政策',
 }
 const catLabel: Record<string, string> = { phone: '手机', laptop: '笔记本', earbuds: '耳机', all: '全站' }
+
+const intentLabel: Record<string, string> = {
+  product_qa: '商品咨询', policy: '售后政策', compare: '商品对比', chitchat: '闲聊',
+}
+const intentType: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'danger'> = {
+  product_qa: 'primary', policy: 'success', compare: 'warning', chitchat: 'info',
+}
 </script>
 
 <template>
@@ -112,6 +127,7 @@ const catLabel: Record<string, string> = { phone: '手机', laptop: '笔记本',
       </el-select>
       <el-checkbox v-model="opts.use_rerank" size="small" label="重排序" />
       <el-checkbox v-model="opts.use_query_rewrite" size="small" label="查询改写" />
+      <el-checkbox v-model="opts.use_intent" size="small" label="意图识别" />
       <el-select v-model="opts.product_category" placeholder="全部类目" clearable style="width: 120px" size="small">
         <el-option label="手机" value="phone" />
         <el-option label="笔记本" value="laptop" />
@@ -137,9 +153,15 @@ const catLabel: Record<string, string> = { phone: '手机', laptop: '笔记本',
         <div class="bubble">
           <template v-if="m.role === 'user'">{{ m.content }}</template>
           <template v-else>
-            <div v-if="m.rewritten" class="rewritten">
-              改写后：{{ m.rewritten }}
+            <div v-if="m.intent || m.rewritten" class="meta-line">
+              <el-tag v-if="m.intent" size="small" :type="intentType[m.intent] || 'info'">
+                意图：{{ intentLabel[m.intent] || m.intent }}
+              </el-tag>
+              <span v-if="m.rewritten" class="rewritten">改写后：{{ m.rewritten }}</span>
             </div>
+
+            <el-alert v-if="m.intent === 'chitchat'" type="info" :closable="false" show-icon
+              title="识别为闲聊，未检索知识库" class="chitchat-note" />
 
             <el-collapse v-if="m.retrieved?.length" class="retrieved">
               <el-collapse-item :title="`检索到 ${m.retrieved.length} 个片段`">
@@ -190,7 +212,9 @@ const catLabel: Record<string, string> = { phone: '手机', laptop: '笔记本',
 .msg.assistant { justify-content: flex-start; }
 .bubble { max-width: 78%; padding: 10px 14px; border-radius: 10px; background: #f4f4f5; line-height: 1.6; }
 .msg.user .bubble { background: #d9ecff; }
-.rewritten { color: #909399; font-size: 12px; margin-bottom: 6px; }
+.meta-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.rewritten { color: #909399; font-size: 12px; }
+.chitchat-note { margin-bottom: 8px; }
 .retrieved { margin-bottom: 8px; }
 .retrieved-item { margin-bottom: 8px; }
 .retrieved-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }

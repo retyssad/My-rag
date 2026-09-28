@@ -51,6 +51,7 @@ class ChatRequest(BaseModel):
     mode: str | None = Field(default=None, description="dense | sparse | hybrid")
     use_rerank: bool | None = None
     use_query_rewrite: bool | None = None
+    use_intent: bool | None = None
     product_category: str | None = None
     doc_type: str | None = None
     dense_top_k: int | None = Field(default=None, ge=1, le=100)

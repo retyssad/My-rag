@@ -18,9 +18,11 @@ from app.db.session import get_db, session_scope
 from app.generation.generator import (
     NO_RESULT_ANSWER,
     LLMClient,
+    build_chitchat_messages,
     build_messages,
     parse_citations,
 )
+from app.retrieval.intent import IntentClassifier, apply_intent_to_config
 from app.retrieval.query_rewriter import QueryRewriter
 from app.retrieval.retriever import RetrievalConfig, Retriever
 
@@ -60,6 +62,8 @@ async def chat(req: ChatRequest):
         cfg.use_rerank = req.use_rerank
     if req.use_query_rewrite is not None:
         cfg.use_query_rewrite = req.use_query_rewrite
+    if req.use_intent is not None:
+        cfg.use_intent = req.use_intent
     if req.product_category:
         cfg.product_category = req.product_category
     if req.doc_type:
@@ -90,13 +94,57 @@ async def chat(req: ChatRequest):
         full_answer = ""
         citations_payload: list[dict] = []
         retrieved_payload: list[dict] = []
+        intent_name: str | None = None
         try:
             # 1) query 改写（多轮）
             rewritten = req.query
             if cfg.use_query_rewrite and history:
                 rewritten = QueryRewriter().rewrite(req.query, history)
 
-            # 2) 检索
+            # 2) 意图识别（软注入：只调整检索参数，不改走哪条链路）
+            short_circuit = False
+            if cfg.use_intent:
+                ir = IntentClassifier().classify(rewritten)
+                intent_name = ir.intent
+                cfg.intent = ir.intent
+                logger.info("意图识别: query=%r -> %s (%s)", req.query[:40], ir.intent, ir.source)
+                short_circuit = apply_intent_to_config(ir, cfg)
+
+            # 3) chitchat 短路：不检索，直接生成
+            if short_circuit:
+                retrieved_payload = []
+                yield {
+                    "event": "retrieval",
+                    "data": json.dumps(
+                        {
+                            "conversation_id": conversation_id,
+                            "query": req.query,
+                            "query_rewritten": rewritten if rewritten != req.query else None,
+                            "mode": cfg.mode,
+                            "intent": intent_name,
+                            "chunks": [],
+                        },
+                        ensure_ascii=False,
+                    ),
+                }
+                for token in LLMClient().stream(build_chitchat_messages(req.query, history)):
+                    full_answer += token
+                    yield {"event": "delta", "data": json.dumps({"text": token}, ensure_ascii=False)}
+                yield {
+                    "event": "citations",
+                    "data": json.dumps({"citations": []}, ensure_ascii=False),
+                }
+                with session_scope() as db:
+                    db.add(Message(conversation_id=conversation_id, role="user", content=req.query))
+                    db.add(Message(conversation_id=conversation_id, role="assistant",
+                                   content=full_answer, citations_json="[]"))
+                yield {
+                    "event": "done",
+                    "data": json.dumps({"conversation_id": conversation_id}, ensure_ascii=False),
+                }
+                return
+
+            # 4) 检索
             result = Retriever().retrieve(rewritten, cfg)
             retrieved_payload = [
                 {
@@ -117,13 +165,14 @@ async def chat(req: ChatRequest):
                         "query": req.query,
                         "query_rewritten": rewritten if rewritten != req.query else None,
                         "mode": cfg.mode,
+                        "intent": intent_name,
                         "chunks": retrieved_payload,
                     },
                     ensure_ascii=False,
                 ),
             }
 
-            # 3) 空结果兜底：不调 LLM
+            # 5) 空结果兜底：不调 LLM
             if not result.chunks:
                 full_answer = NO_RESULT_ANSWER
                 yield {"event": "delta", "data": json.dumps({"text": full_answer}, ensure_ascii=False)}
@@ -133,7 +182,7 @@ async def chat(req: ChatRequest):
                     full_answer += token
                     yield {"event": "delta", "data": json.dumps({"text": token}, ensure_ascii=False)}
 
-            # 4) 引用
+            # 6) 引用
             if result.chunks:
                 cites = parse_citations(full_answer, result.chunks)
                 citations_payload = [c.__dict__ for c in cites]
@@ -142,7 +191,7 @@ async def chat(req: ChatRequest):
                 "data": json.dumps({"citations": citations_payload}, ensure_ascii=False),
             }
 
-            # 5) 落库
+            # 7) 落库
             with session_scope() as db:
                 db.add(Message(conversation_id=conversation_id, role="user", content=req.query))
                 db.add(

@@ -39,6 +39,7 @@ export interface ChatOptions {
   mode?: 'dense' | 'sparse' | 'hybrid'
   use_rerank?: boolean
   use_query_rewrite?: boolean
+  use_intent?: boolean
   product_category?: string
   doc_type?: string
 }
@@ -80,7 +81,7 @@ export async function retryDocument(id: number): Promise<void> {
 }
 
 export interface ChatHandlers {
-  onRetrieval?: (data: { conversation_id: number; query_rewritten: string | null; mode: string; chunks: RetrievedChunk[] }) => void
+  onRetrieval?: (data: { conversation_id: number; query_rewritten: string | null; mode: string; intent?: string | null; chunks: RetrievedChunk[] }) => void
   onDelta?: (text: string) => void
   onCitations?: (citations: Citation[]) => void
   onDone?: (data: { conversation_id: number }) => void

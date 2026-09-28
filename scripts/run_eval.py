@@ -28,10 +28,11 @@ GOLD = ROOT / "data" / "eval" / "gold.jsonl"
 
 # 消融配置：名字 -> RetrievalConfig 覆盖项
 ABLATIONS: dict[str, dict] = {
-    "dense": {"mode": "dense", "use_rerank": False},
-    "sparse": {"mode": "sparse", "use_rerank": False},
-    "hybrid": {"mode": "hybrid", "use_rerank": False},
-    "hybrid_rerank": {"mode": "hybrid", "use_rerank": True},
+    "dense": {"mode": "dense", "use_rerank": False, "use_intent": False},
+    "sparse": {"mode": "sparse", "use_rerank": False, "use_intent": False},
+    "hybrid": {"mode": "hybrid", "use_rerank": False, "use_intent": False},
+    "hybrid_rerank": {"mode": "hybrid", "use_rerank": True, "use_intent": False},
+    "hybrid_rerank_intent": {"mode": "hybrid", "use_rerank": True, "use_intent": True},
 }
 
 
@@ -50,9 +51,42 @@ def evaluate_one(retriever: Retriever, item: dict, cfg: RetrievalConfig, k: int 
     """返回该 query 的各指标所需原始量。
 
     匹配键用 source_path（稳定），不用 DB 自增 id（重入库会变）。
+
+    注意：chitchat 类样本没有 relevant 文档（预期不检索），
+    这里标记 evaluated=False，不计入检索指标。
     """
     query = item["query"]
-    result = retriever.retrieve(query, cfg)
+    run_cfg = cfg.clone()
+
+    # 软注入：意图识别（仅当该档启用）
+    if run_cfg.use_intent:
+        from app.retrieval.intent import IntentClassifier, apply_intent_to_config
+
+        ir = IntentClassifier().classify(query)
+        run_cfg.intent = ir.intent
+        short = apply_intent_to_config(ir, run_cfg)
+        if short:  # chitchat：不检索
+            return {
+                "query": query,
+                "type": item["type"],
+                "evaluated": False,
+                "intent": ir.intent,
+                "n_relevant": 0,
+                "n_hit": 0,
+                "first_hit_rank": None,
+                "hits_flags": [],
+                "chunks": [],
+            }
+
+    if not item.get("relevant"):
+        # 非 chitchat 却无标注：不计入
+        return {
+            "query": query, "type": item["type"], "evaluated": False,
+            "intent": run_cfg.intent, "n_relevant": 0, "n_hit": 0,
+            "first_hit_rank": None, "hits_flags": [], "chunks": [],
+        }
+
+    result = retriever.retrieve(query, run_cfg)
     chunks = result.chunks[:k]
 
     # 每个相关文档（按 source_path 标识）及其目标片段
@@ -84,6 +118,8 @@ def evaluate_one(retriever: Retriever, item: dict, cfg: RetrievalConfig, k: int 
 
 
 def metrics(rows: list[dict], ks: tuple[int, ...] = (1, 3, 5, 10)) -> dict:
+    # 只统计有检索预期的样本（剔除 chitchat 等无标注项）
+    rows = [r for r in rows if r.get("evaluated", True) and r["n_relevant"] > 0]
     n = len(rows)
     out = {}
 

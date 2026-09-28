@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     use_rerank: bool = True
     rerank_top_n: int = 5
     use_query_rewrite: bool = True
+    use_intent: bool = True
     min_score_threshold: float = 0.0
 
     # --- 可选：LangSmith ---

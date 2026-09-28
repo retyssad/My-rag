@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -50,10 +51,11 @@ def find(manifest: list[dict], *, title: str | None = None, category: str | None
 
 
 def entry(query: str, qtype: str, relevant: list[dict], context: list[dict] | None = None,
-          note: str = "") -> dict:
+          note: str = "", intent: str = "product_qa") -> dict:
     e = {
         "query": query,
         "type": qtype,
+        "intent": intent,          # 期望的意图标签（用于分类准确率评估）
         "relevant": relevant,
     }
     if context:
@@ -105,9 +107,9 @@ def main() -> None:
             doc = find(man, title=f"{brand} {model} 商品详情")
             if not doc:
                 continue
-            gold.append(entry(f"{brand} {model} 的处理器是什么？", "simple", [rel(doc, chip)]))
-            gold.append(entry(f"{brand} {model} 多少钱？", "simple", [rel(doc, f"{price} 元")]))
-            gold.append(entry(f"{brand} {model} 的屏幕规格？", "simple", [rel(doc, screen)]))
+            gold.append(entry(f"{brand} {model} 的处理器是什么？", "simple", [rel(doc, chip)], intent="product_qa"))
+            gold.append(entry(f"{brand} {model} 多少钱？", "simple", [rel(doc, f"{price} 元")], intent="product_qa"))
+            gold.append(entry(f"{brand} {model} 的屏幕规格？", "simple", [rel(doc, screen)], intent="product_qa"))
 
     # ---------------- 2) 商品详情：hard 口语化/同义 ----------------
     hard_map = {
@@ -139,7 +141,7 @@ def main() -> None:
                     doc = m
                     break
             if doc:
-                gold.append(entry(q, "hard", [rel(doc, snippet)]))
+                gold.append(entry(q, "hard", [rel(doc, snippet)], intent="product_qa"))
 
     # ---------------- 3) FAQ ----------------
     for category, faqs in FAQ_TEMPLATES.items():
@@ -152,14 +154,26 @@ def main() -> None:
             if doc:
                 # 用解答的前半段作为 snippet（保证连续存在）
                 snippet = a[:12]
-                gold.append(entry(q, "simple", [rel(doc, snippet)]))
+                gold.append(entry(q, "simple", [rel(doc, snippet)], intent="product_qa"))
 
     # ---------------- 4) 对比类：cross ----------------
+    # 说明：COMPARISON_PAIRS 里有两类语义——
+    #   (a) "A 与 B 怎么选"  → 真·对比（intent=compare）
+    #   (b) "xx 选购指南/怎么挑" → 开放推荐（intent=product_qa），
+    #       它不是"A vs B"，归为对比会与意图定义冲突（实测模型判 product_qa 更合理）。
+    def _is_pairwise(t: str) -> bool:
+        # 形如「X30 Pro 与 X30 怎么选」：含具体型号 + "与/和/区别/差异/对比"
+        return bool(
+            re.search(r"[A-Za-z0-9]+\s*(?:与|和|vs|VS)\s*[A-Za-z0-9]+", t)
+            or re.search(r"(区别|差异|对比)", t)
+        )
+
     for _category, pairs in COMPARISON_PAIRS.items():
         for title, _subjects in pairs:
             doc = find(man, title=title)
             if doc and _file_contains(ROOT / doc["source_path"], "核心差异"):
-                gold.append(entry(title + "？", "cross", [rel(doc, "核心差异")]))
+                q_intent = "compare" if _is_pairwise(title) else "product_qa"
+                gold.append(entry(title + "？", "cross", [rel(doc, "核心差异")], intent=q_intent))
     # 跨文档对比（需要两篇同时命中）
     cross_pairs = [
         ("对比一下 X30 Pro 和 X30 的处理器差异", "phone"),
@@ -173,7 +187,7 @@ def main() -> None:
             if m["product_category"] == category and m["doc_type"] == "product_detail"
         ][:2]
         if rels:
-            gold.append(entry(q, "cross", rels[:2]))
+            gold.append(entry(q, "cross", rels[:2], intent="compare"))
 
     # ---------------- 5) filter：需要元数据过滤 ----------------
     filter_cases = [
@@ -193,7 +207,7 @@ def main() -> None:
                     doc = m
                     break
         if doc:
-            gold.append(entry(q, "filter", [rel(doc, snippet)]))
+            gold.append(entry(q, "filter", [rel(doc, snippet)], intent="policy"))
 
     # ---------------- 6) coref：带指代，需上下文改写 ----------------
     coref_cases = [
@@ -221,7 +235,17 @@ def main() -> None:
                 doc = m
                 break
         if doc:
-            gold.append(entry(q, "coref", [rel(doc, snippet)], context=ctx))
+            gold.append(entry(q, "coref", [rel(doc, snippet)], context=ctx, intent="product_qa"))
+
+    # ---------------- 7) chitchat：寒暄/无关，不检索 ----------------
+    chitchat_cases = [
+        "你好",
+        "你是谁？",
+        "在吗",
+        "谢谢你的帮助",
+    ]
+    for q in chitchat_cases:
+        gold.append(entry(q, "chitchat", [], intent="chitchat"))
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("w", encoding="utf-8") as f:
