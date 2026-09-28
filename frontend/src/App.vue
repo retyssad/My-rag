@@ -24,5 +24,5 @@ html, body, #app { height: 100%; margin: 0; }
 .header { display: flex; align-items: center; border-bottom: 1px solid #eee; }
 .brand { font-weight: 700; font-size: 16px; margin-right: 24px; white-space: nowrap; }
 .menu { border-bottom: none; flex: 1; }
-.main { height: calc(100vh - 61px); overflow: hidden; padding: 12px 20px; }
+.main { height: calc(100vh - 61px); overflow-y: auto; padding: 12px 20px; box-sizing: border-box; }
 </style>
