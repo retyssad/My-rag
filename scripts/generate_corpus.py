@@ -135,9 +135,51 @@ COMPARISON_PAIRS = {
 
 # ------------------------------------------------------------------ 内容构造
 
+# 商品元组的字段位置含义（见 PRODUCTS）：
+#   (brand, model, price, chip, screen, battery, extra)
+# 同一位置在不同类目下语义不同，故按类目给出专属表头与措辞，
+# 避免出现"处理器: 蓝牙5.3"这类标签错配。
+CATEGORY_FIELDS = {
+    "phone": {
+        "chip": "处理器", "screen": "屏幕", "battery": "电池容量", "extra": "充电功率",
+        "intro": "{brand} {model} 是一款面向主流用户的手机，搭载 {chip}，配备 {screen}，"
+                 "电池容量 {battery}，支持 {extra} 快充。",
+        "sell": [
+            "{chip} 提供流畅的日常使用体验",
+            "{screen} 在同价位中表现突出",
+            "{battery} 电池搭配 {extra} 快充，续航与充电兼顾",
+        ],
+    },
+    "laptop": {
+        "chip": "处理器", "screen": "屏幕", "battery": "电池容量", "extra": "机身重量",
+        "intro": "{brand} {model} 是一款面向主流用户的笔记本电脑，搭载 {chip}，"
+                 "配备 {screen}，电池容量 {battery}，机身重量 {extra}。",
+        "sell": [
+            "{chip} 提供流畅的日常使用体验",
+            "{screen} 在同价位中表现突出",
+            "{battery} 电池搭配 {extra} 机身，兼顾续航与便携",
+        ],
+    },
+    "earbuds": {
+        "chip": "蓝牙版本", "screen": "总续航", "battery": "降噪深度", "extra": "防护等级",
+        "intro": "{brand} {model} 是一款面向主流用户的蓝牙耳机，支持 {chip}，"
+                 "配合充电盒总续航 {screen}，降噪配置为 {battery}，防护等级 {extra}。",
+        "sell": [
+            "{chip} 提供稳定的连接体验",
+            "总续航 {screen}，满足日常通勤与出差",
+            "{battery}，{extra} 防护等级适应日常运动场景",
+        ],
+    },
+}
+
+
 def product_detail_md(brand: str, model: str, price: int, chip: str, screen: str,
                       battery: str, extra: str, category: str) -> str:
     cat = CATEGORIES[category]
+    fields = CATEGORY_FIELDS[category]
+    fmt = dict(brand=brand, model=model, chip=chip, screen=screen, battery=battery, extra=extra)
+    intro = fields["intro"].format(**fmt)
+    sell = [s.format(**fmt) for s in fields["sell"]]
     lines = [
         f"# {brand} {model} 商品详情",
         "",
@@ -145,23 +187,22 @@ def product_detail_md(brand: str, model: str, price: int, chip: str, screen: str
         f"**官方售价**：{price} 元",
         "",
         "## 产品简介",
-        f"{brand} {model} 是一款面向主流用户的{cat}，"
-        f"搭载 {chip}，配备 {screen}，官方定位为{'旗舰' if price > 4000 else '中端'}产品。",
+        intro,
         "",
         "## 核心参数",
         "",
         "| 参数项 | 规格 |",
         "| --- | --- |",
-        f"| 处理器 | {chip} |",
-        f"| 屏幕 | {screen} |",
-        f"| 电池/续航 | {battery} |",
-        f"| 特色参数 | {extra} |",
+        f"| {fields['chip']} | {chip} |",
+        f"| {fields['screen']} | {screen} |",
+        f"| {fields['battery']} | {battery} |",
+        f"| {fields['extra']} | {extra} |",
         f"| 售价 | {price} 元 |",
         "",
         "## 卖点",
-        f"1. {chip} 提供流畅的日常使用体验；",
-        f"2. {screen} 在同价位中表现突出；",
-        f"3. {battery} 的续航/充电配置满足日常需求。",
+        f"1. {sell[0]}；",
+        f"2. {sell[1]}；",
+        f"3. {sell[2]}。",
         "",
         "## 包装清单",
         "主机 × 1、说明书 × 1、保修卡 × 1、原装线材 × 1。",
