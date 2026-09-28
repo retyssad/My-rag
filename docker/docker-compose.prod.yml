@@ -1,0 +1,113 @@
+# 生产/演示编排：中间件 + 后端 + 前端
+#
+# 用法：
+#   1) 复制 .env.example 为 .env 并填写 DASHSCOPE_API_KEY
+#   2) docker compose -f docker/docker-compose.prod.yml up -d --build
+#   3) 打开 http://localhost:8088
+#
+# 注意：容器内的 MySQL/Milvus 地址用服务名（mysql/milvus），端口用容器内部端口，
+# 与本地开发时用的映射端口（13306/29530）不同。
+
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.25
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+    volumes:
+      - ./volumes/etcd:/etcd
+    command: etcd -advertise-client-urls=http://etcd:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks: [rag-net]
+
+  minio:
+    image: minio/minio:RELEASE.2024-05-28T17-19-04Z
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    volumes:
+      - ./volumes/minio:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks: [rag-net]
+
+  milvus:
+    image: milvusdb/milvus:v2.6.24
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MQ_TYPE: woodpecker
+    volumes:
+      - ./volumes/milvus:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    depends_on: [etcd, minio]
+    networks: [rag-net]
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: rag
+      MYSQL_USER: rag
+      MYSQL_PASSWORD: rag_pass
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [rag-net]
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    env_file: ../.env
+    environment:
+      # 容器内使用服务名与内部端口（覆盖 .env 中面向宿主机的值）
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MILVUS_HOST: milvus
+      MILVUS_PORT: "19530"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      milvus:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks: [rag-net]
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    depends_on: [backend]
+    ports:
+      - "8088:80"
+    networks: [rag-net]
+
+networks:
+  rag-net:
+    name: rag-prod-net

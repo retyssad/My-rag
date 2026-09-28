@@ -1,0 +1,610 @@
+[
+  {
+    "doc_id": 1,
+    "title": "星耀 X30 Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_星耀_x30_pro.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 2,
+    "title": "星耀 X30 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_星耀_x30.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 3,
+    "title": "星耀 X30 Lite 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_星耀_x30_lite.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 4,
+    "title": "云雀 Y9 Ultra 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_云雀_y9_ultra.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 5,
+    "title": "云雀 Y9 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_云雀_y9.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 6,
+    "title": "云雀 Y9 SE 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_云雀_y9_se.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 7,
+    "title": "极光 A5 Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_极光_a5_pro.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 8,
+    "title": "极光 A5 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/detail_极光_a5.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 9,
+    "title": "X30 Pro 与 X30 怎么选",
+    "doc_type": "comparison",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/compare_0_x30_pro_与_x30_怎么选.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 10,
+    "title": "Y9 Ultra 与 Y9 怎么选",
+    "doc_type": "comparison",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/compare_1_y9_ultra_与_y9_怎么选.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 11,
+    "title": "2000~3000 元手机选购指南",
+    "doc_type": "comparison",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/compare_2_2000~3000_元手机选购指南.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 12,
+    "title": "长续航手机怎么挑",
+    "doc_type": "comparison",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/compare_3_长续航手机怎么挑.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 13,
+    "title": "拍照手机选购要点",
+    "doc_type": "comparison",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/compare_4_拍照手机选购要点.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 14,
+    "title": "手机常见问题：是否支持快充？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_0.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 15,
+    "title": "手机常见问题：支持无线充电吗？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_1.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 16,
+    "title": "手机常见问题：电池续航怎么样？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_2.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 17,
+    "title": "手机常见问题：可以用两张电话卡吗？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_3.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 18,
+    "title": "手机常见问题：支持防水吗？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_4.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 19,
+    "title": "手机常见问题：系统是安卓吗？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_5.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 20,
+    "title": "手机常见问题：支持 5G 吗？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_6.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 21,
+    "title": "手机常见问题：屏幕碎了保修吗？",
+    "doc_type": "faq",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/faq_7.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 22,
+    "title": "手机·退换货政策",
+    "doc_type": "policy",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/policy_return.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 23,
+    "title": "手机·保修与维修政策",
+    "doc_type": "policy",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/policy_warranty.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 24,
+    "title": "手机·配送与运费说明",
+    "doc_type": "policy",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/policy_shipping.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 25,
+    "title": "手机·发票与售后凭证说明",
+    "doc_type": "policy",
+    "product_category": "phone",
+    "source_path": "data/raw/phone/policy_invoice.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 26,
+    "title": "星耀 Book 14 Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_星耀_book_14_pro.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 27,
+    "title": "星耀 Book 14 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_星耀_book_14.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 28,
+    "title": "云雀 Air 13 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_云雀_air_13.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 29,
+    "title": "云雀 Air 15 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_云雀_air_15.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 30,
+    "title": "极光 Game 16 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_极光_game_16.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 31,
+    "title": "极光 Game 16 Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_极光_game_16_pro.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 32,
+    "title": "星耀 Book 16 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_星耀_book_16.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 33,
+    "title": "云雀 Air 14 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/detail_云雀_air_14.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 34,
+    "title": "轻薄本 14 寸与 16 寸怎么选",
+    "doc_type": "comparison",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/compare_0_轻薄本_14_寸与_16_寸怎么选.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 35,
+    "title": "游戏本选购指南",
+    "doc_type": "comparison",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/compare_1_游戏本选购指南.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 36,
+    "title": "办公本续航对比",
+    "doc_type": "comparison",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/compare_2_办公本续航对比.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 37,
+    "title": "编程开发选什么笔记本",
+    "doc_type": "comparison",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/compare_3_编程开发选什么笔记本.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 38,
+    "title": "预算 6000 元笔记本怎么选",
+    "doc_type": "comparison",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/compare_4_预算_6000_元笔记本怎么选.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 39,
+    "title": "笔记本电脑常见问题：可以加内存吗？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_0.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 40,
+    "title": "笔记本电脑常见问题：能玩大型游戏吗？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_1.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 41,
+    "title": "笔记本电脑常见问题：续航大概多久？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_2.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 42,
+    "title": "笔记本电脑常见问题：有雷电接口吗？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_3.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 43,
+    "title": "笔记本电脑常见问题：可以自己加装硬盘吗？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_4.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 44,
+    "title": "笔记本电脑常见问题：散热怎么样？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_5.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 45,
+    "title": "笔记本电脑常见问题：预装正版系统吗？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_6.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 46,
+    "title": "笔记本电脑常见问题：适合设计/剪辑吗？",
+    "doc_type": "faq",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/faq_7.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 47,
+    "title": "笔记本电脑·退换货政策",
+    "doc_type": "policy",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/policy_return.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 48,
+    "title": "笔记本电脑·保修与维修政策",
+    "doc_type": "policy",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/policy_warranty.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 49,
+    "title": "笔记本电脑·配送与运费说明",
+    "doc_type": "policy",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/policy_shipping.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 50,
+    "title": "笔记本电脑·发票与售后凭证说明",
+    "doc_type": "policy",
+    "product_category": "laptop",
+    "source_path": "data/raw/laptop/policy_invoice.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 51,
+    "title": "星耀 Buds Air 3 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_星耀_buds_air_3.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 52,
+    "title": "星耀 Buds Air 3 Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_星耀_buds_air_3_pro.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 53,
+    "title": "云雀 Pods S 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_云雀_pods_s.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 54,
+    "title": "云雀 Pods S Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_云雀_pods_s_pro.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 55,
+    "title": "极光 Sonic 2 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_极光_sonic_2.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 56,
+    "title": "极光 Sonic 2 Pro 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_极光_sonic_2_pro.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 57,
+    "title": "星耀 Buds Lite 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_星耀_buds_lite.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 58,
+    "title": "云雀 Pods Lite 商品详情",
+    "doc_type": "product_detail",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/detail_云雀_pods_lite.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 59,
+    "title": "降噪耳机怎么选",
+    "doc_type": "comparison",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/compare_0_降噪耳机怎么选.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 60,
+    "title": "百元耳机选购指南",
+    "doc_type": "comparison",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/compare_1_百元耳机选购指南.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 61,
+    "title": "运动和通勤耳机区别",
+    "doc_type": "comparison",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/compare_2_运动和通勤耳机区别.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 62,
+    "title": "长续航耳机对比",
+    "doc_type": "comparison",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/compare_3_长续航耳机对比.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 63,
+    "title": "入门与旗舰耳机差异",
+    "doc_type": "comparison",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/compare_4_入门与旗舰耳机差异.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 64,
+    "title": "蓝牙耳机常见问题：降噪效果如何？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_0.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 65,
+    "title": "蓝牙耳机常见问题：单次续航多久？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_1.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 66,
+    "title": "蓝牙耳机常见问题：支持无线充电吗？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_2.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 67,
+    "title": "蓝牙耳机常见问题：可以同时连两个设备吗？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_3.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 68,
+    "title": "蓝牙耳机常见问题：防水吗？运动能戴吗？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_4.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 69,
+    "title": "蓝牙耳机常见问题：延迟高吗？玩游戏可以吗？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_5.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 70,
+    "title": "蓝牙耳机常见问题：丢了单只耳机怎么办？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_6.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 71,
+    "title": "蓝牙耳机常见问题：兼容苹果手机吗？",
+    "doc_type": "faq",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/faq_7.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 72,
+    "title": "蓝牙耳机·退换货政策",
+    "doc_type": "policy",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/policy_return.html",
+    "format": "html"
+  },
+  {
+    "doc_id": 73,
+    "title": "蓝牙耳机·保修与维修政策",
+    "doc_type": "policy",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/policy_warranty.md",
+    "format": "md"
+  },
+  {
+    "doc_id": 74,
+    "title": "蓝牙耳机·配送与运费说明",
+    "doc_type": "policy",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/policy_shipping.pdf",
+    "format": "pdf"
+  },
+  {
+    "doc_id": 75,
+    "title": "蓝牙耳机·发票与售后凭证说明",
+    "doc_type": "policy",
+    "product_category": "earbuds",
+    "source_path": "data/raw/earbuds/policy_invoice.docx",
+    "format": "docx"
+  },
+  {
+    "doc_id": 76,
+    "title": "全站售后总政策",
+    "doc_type": "policy",
+    "product_category": "all",
+    "source_path": "data/raw/all/global_policy.md",
+    "format": "md"
+  }
+]

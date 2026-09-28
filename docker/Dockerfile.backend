@@ -1,0 +1,30 @@
+# 后端镜像：FastAPI + uvicorn
+FROM python:3.11-slim
+
+# 系统依赖：PyMuPDF(轮子自带)、pymysql 无需编译；保留 curl 供健康检查
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# uv：用于安装依赖（比 pip 快且可复现）
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+# 先拷贝依赖声明，利用层缓存
+COPY pyproject.toml ./
+# 安装依赖（不含 dev）
+RUN uv pip install --system --no-cache -r pyproject.toml
+
+# 拷贝应用代码与脚本
+COPY backend ./backend
+COPY scripts ./scripts
+
+ENV PYTHONPATH=/app/backend \
+    PYTHONUNBUFFERED=1
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "backend"]
