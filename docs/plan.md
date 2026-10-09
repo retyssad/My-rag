@@ -65,11 +65,17 @@ documents(id, title, doc_type, product_category, source_path,
           error_msg, created_at, updated_at)
 chunks(id, doc_id, chunk_index, content TEXT, token_count,
        chunk_type, milvus_id, metadata_json)
+parent_chunks(id VARCHAR(64), doc_id, chunk_index, content TEXT,
+              chunk_type, heading_path, token_count)
+chunk_parents(child_id VARCHAR(64) PK/FK -> chunks.milvus_id,
+              parent_id FK -> parent_chunks.id)
 conversations(id, title, created_at)
 messages(id, conversation_id, role, content, citations_json, created_at)
 ```
 
 **Milvus collection `chunks`**：`id`(PK=`{doc_id}_{chunk_index}`)、`dense_vector`(FLOAT_VECTOR 1024)、`content`(VARCHAR，`enable_analyzer=True`，经 `FunctionType.BM25` 生成 sparse)、`sparse_vector`(SPARSE_FLOAT_VECTOR)、标量 `doc_id/doc_type/product_category/chunk_type/source_path`（INVERTED）。稠密索引 HNSW/COSINE，稀疏索引 SPARSE_INVERTED_INDEX/BM25。
+
+父子块（ADR-0008）：父 Chunk 默认 1500 字、无重叠，子 Chunk 默认 500 字、重叠 80 字；只索引子块，父块和映射存 MySQL。表格各生成一个完整父块与子块。`chunk_count` 统计子块数。
 
 ## 5. 检索链路
 
@@ -80,12 +86,15 @@ query ─(多轮先改写)─┬─ dense search (top20) ─┐
                                               ↓
                         hybrid_search + RRFRanker(k=60) → top10
                                               ↓
-                              qwen3-rerank → top5
+                              子块 qwen3-rerank
                                               ↓
-                 低于阈值 → 固定话术(不调 LLM)
+                       阈值过滤 → 批量回查父块 → 去重 top5
+                       （无合格结果 → 固定话术，不调 LLM）
                                               ↓
              prompt(编号[1..5]) → LLM 流式 → 解析[n] → citations
 ```
+
+父块回查由 `use_parent_retrieval` 控制；缺少父子映射的旧文档沿用原 Chunk。关闭回查时直接返回子块。引用与 Prompt 使用相同的上下文正文及 ID，详见 ADR-0008。
 
 `RetrievalConfig`：
 ```python

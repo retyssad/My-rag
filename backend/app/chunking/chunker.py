@@ -24,6 +24,7 @@ class ChunkDraft:
     chunk_type: str  # "text" | "table"
     heading_path: str = ""
     token_count: int = 0
+    parent_index: int | None = None
 
 
 @dataclass
@@ -32,6 +33,20 @@ class ChunkingConfig:
     chunk_overlap: int = 80
     min_chunk_len: int = 20
     separators: list[str] = field(default_factory=lambda: list(SEPARATORS))
+    parent_chunk_size: int | None = 1500
+    preserve_short_text: bool = False
+
+    def __post_init__(self) -> None:
+        if self.chunk_size <= 0 or self.chunk_overlap < 0 or self.min_chunk_len < 1:
+            raise ValueError("chunk_size/min_chunk_len 必须为正数，chunk_overlap 不能为负数")
+        if self.parent_chunk_size is not None and self.parent_chunk_size < self.chunk_size:
+            raise ValueError("parent_chunk_size 必须不小于 chunk_size")
+
+
+@dataclass
+class ParentChildChunks:
+    parents: list[ChunkDraft]
+    children: list[ChunkDraft]
 
 
 def table_to_markdown(rows: list[list[str]]) -> str:
@@ -87,7 +102,7 @@ def chunk_ir(blocks: list[IRBlock], config: ChunkingConfig | None = None) -> lis
         joined = "\n".join(buffer).strip()
         heading = buf_heading
         buffer, buf_len, buf_heading = [], 0, ""
-        if len(joined) < cfg.min_chunk_len:
+        if len(joined) < cfg.min_chunk_len and not cfg.preserve_short_text:
             return
         # 切分后，过短的片段「并入下一片」而不是丢弃——否则短标题/短事实句会丢失
         pieces = [p.strip() for p in splitter.split_text(joined) if p.strip()]
@@ -155,3 +170,36 @@ def chunk_ir(blocks: list[IRBlock], config: ChunkingConfig | None = None) -> lis
 
     flush_text()
     return drafts
+
+
+def chunk_parent_child_ir(
+    blocks: list[IRBlock], config: ChunkingConfig | None = None,
+) -> ParentChildChunks:
+    """父块用于上下文，子块用于检索；子块仅在所属父块内切分，表格保持完整。
+
+    parent_chunk_size=None 可按旧策略入库。短正文和末尾事实句均保留，
+    父块之间不重叠，避免回查后重复注入上下文。
+    """
+    cfg = config or ChunkingConfig()
+    if cfg.parent_chunk_size is None:
+        return ParentChildChunks(parents=[], children=chunk_ir(blocks, cfg))
+    parents = chunk_ir(blocks, ChunkingConfig(
+        chunk_size=cfg.parent_chunk_size, chunk_overlap=0,
+        min_chunk_len=cfg.min_chunk_len, separators=cfg.separators,
+        parent_chunk_size=None, preserve_short_text=True,
+    ))
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=cfg.chunk_size,
+        chunk_overlap=min(cfg.chunk_overlap, cfg.chunk_size - 1),
+        separators=cfg.separators, keep_separator=True,
+    )
+    children = []
+    for index, parent in enumerate(parents):
+        pieces = [parent.content] if parent.chunk_type == "table" else splitter.split_text(parent.content)
+        for piece in pieces:
+            children.append(ChunkDraft(
+                content=piece, chunk_type=parent.chunk_type,
+                heading_path=parent.heading_path, token_count=_estimate_tokens(piece),
+                parent_index=index,
+            ))
+    return ParentChildChunks(parents=parents, children=children)

@@ -28,11 +28,12 @@ GOLD = ROOT / "data" / "eval" / "gold.jsonl"
 
 # 消融配置：名字 -> RetrievalConfig 覆盖项
 ABLATIONS: dict[str, dict] = {
-    "dense": {"mode": "dense", "use_rerank": False, "use_intent": False},
-    "sparse": {"mode": "sparse", "use_rerank": False, "use_intent": False},
-    "hybrid": {"mode": "hybrid", "use_rerank": False, "use_intent": False},
-    "hybrid_rerank": {"mode": "hybrid", "use_rerank": True, "use_intent": False},
-    "hybrid_rerank_intent": {"mode": "hybrid", "use_rerank": True, "use_intent": True},
+    "dense": {"mode": "dense", "use_rerank": False, "use_intent": False, "use_parent_retrieval": False},
+    "sparse": {"mode": "sparse", "use_rerank": False, "use_intent": False, "use_parent_retrieval": False},
+    "hybrid": {"mode": "hybrid", "use_rerank": False, "use_intent": False, "use_parent_retrieval": False},
+    "hybrid_rerank": {"mode": "hybrid", "use_rerank": True, "use_intent": False, "use_parent_retrieval": False},
+    "hybrid_rerank_intent": {"mode": "hybrid", "use_rerank": True, "use_intent": True, "use_parent_retrieval": False},
+    "hybrid_rerank_parent": {"mode": "hybrid", "use_rerank": True, "use_intent": False, "use_parent_retrieval": True},
 }
 
 

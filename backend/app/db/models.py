@@ -1,6 +1,7 @@
 """SQLAlchemy ORM 模型。
 
-MySQL 是事实来源（ADR-0002）：documents / chunks / conversations / messages。
+MySQL 是事实来源（ADR-0002/0008）：documents / chunks / parent_chunks /
+chunk_parents / conversations / messages。
 """
 
 from __future__ import annotations
@@ -58,6 +59,9 @@ class Document(Base):
     chunks: Mapped[list[Chunk]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
+    parent_chunks: Mapped[list[ParentChunk]] = relationship(
+        back_populates="document", cascade="all, delete-orphan"
+    )
 
 
 class Chunk(Base):
@@ -79,6 +83,37 @@ class Chunk(Base):
     __table_args__ = (
         Index("ix_chunks_doc_id", "doc_id"),
         Index("ix_chunks_milvus_id", "milvus_id", unique=True),
+    )
+
+
+class ParentChunk(Base):
+    """仅存在 MySQL 的生成上下文；新增表，无需修改旧 chunks/Milvus schema。"""
+
+    __tablename__ = "parent_chunks"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    doc_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True,
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    chunk_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    heading_path: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    token_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    document: Mapped[Document] = relationship(back_populates="parent_chunks")
+
+
+class ChunkParent(Base):
+    """检索 ID → 父块 ID；重试/删除通过外键级联清理映射。"""
+
+    __tablename__ = "chunk_parents"
+
+    child_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("chunks.milvus_id", ondelete="CASCADE"), primary_key=True,
+    )
+    parent_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("parent_chunks.id", ondelete="CASCADE"), nullable=False, index=True,
     )
 
 

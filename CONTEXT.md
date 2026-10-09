@@ -14,11 +14,11 @@ _Avoid_: 语料、数据集、资料库
 _Avoid_: 文件、资料、article
 
 **Chunk**：
-从一份 Document 切分得到的可检索文本段，携带元数据，是向量检索与关键词检索的最小单位，也是引用来源的粒度。
+从一份 Document 切分得到的文本段。子 Chunk 是向量检索与关键词检索的最小单位；父 Chunk 是回查后的生成上下文与引用来源粒度。没有父子映射的旧文档继续以原 Chunk 为上下文与引用来源。
 _Avoid_: 片段、block、paragraph、分片
 
 **引用来源 (Citation)**：
-答案所依据的 Chunk 集合，随答案一并返回给用户。
+答案所依据的上下文 Chunk 集合，随答案一并返回给用户。开启父块回查时引用父 Chunk；关闭时引用命中的子 Chunk。
 _Avoid_: 参考、reference、source
 
 **混合检索 (Hybrid Retrieval)**：

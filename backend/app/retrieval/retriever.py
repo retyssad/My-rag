@@ -17,6 +17,7 @@ from pymilvus import AnnSearchRequest, MilvusClient, RRFRanker
 from app.config import get_settings
 from app.indexing.embedder import Embedder
 from app.indexing.milvus_store import make_client
+from app.retrieval.parent_context import expand_parent_context
 from app.retrieval.reranker import Reranker
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class RetrievalConfig:
     # policy 意图：doc_type 过滤取「并集」而非排他过滤，
     # 保证召回不会低于无过滤 baseline（防止误判导致漏召，见 ADR-0007）。
     union_unfiltered: bool = False
+    use_parent_retrieval: bool = True
 
     @classmethod
     def from_settings(cls) -> RetrievalConfig:
@@ -61,6 +63,7 @@ class RetrievalConfig:
             use_query_rewrite=s.use_query_rewrite,
             use_intent=s.use_intent,
             min_score_threshold=s.min_score_threshold,
+            use_parent_retrieval=s.use_parent_retrieval,
         )
 
     def clone(self) -> RetrievalConfig:
@@ -70,6 +73,8 @@ class RetrievalConfig:
     def describe(self) -> str:
         """供评估表格/日志展示的简短标识。"""
         flags = [self.mode]
+        if self.use_parent_retrieval:
+            flags.append("parent")
         if self.diversify_by_doc:
             flags.append("diversify")
         return "+".join(flags)
@@ -102,6 +107,8 @@ class RetrievedChunk:
     chunk_type: str
     source_path: str
     score: float | None = None
+    parent_id: str | None = None
+    matched_child_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -231,8 +238,10 @@ class Retriever:
 
         # rerank
         if cfg.use_rerank and candidates:
+            # 父块模式排序全部子块，回查去重后再截断，避免兄弟子块占满 top-N。
+            rank_limit = len(candidates) if cfg.use_parent_retrieval else cfg.rerank_top_n
             pairs = self._reranker.rerank(
-                query, [c.content for c in candidates], cfg.rerank_top_n
+                query, [c.content for c in candidates], rank_limit
             )
             ranked = []
             for idx, score in pairs:
@@ -243,8 +252,8 @@ class Retriever:
             if ranked:
                 candidates = ranked
             else:
-                candidates = candidates[: cfg.rerank_top_n]
-        else:
+                candidates = candidates[:rank_limit]
+        elif not cfg.use_parent_retrieval:
             candidates = candidates[: cfg.rerank_top_n]
 
         # 空结果/低分兜底
@@ -252,6 +261,9 @@ class Retriever:
             candidates = [
                 c for c in candidates if c.score is not None and c.score >= cfg.min_score_threshold
             ]
+
+        if cfg.use_parent_retrieval:
+            candidates = expand_parent_context(candidates)[: cfg.rerank_top_n]
 
         return RetrievalResult(
             query=query,

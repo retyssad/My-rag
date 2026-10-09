@@ -52,6 +52,7 @@ class ChatRequest(BaseModel):
     use_rerank: bool | None = None
     use_query_rewrite: bool | None = None
     use_intent: bool | None = None
+    use_parent_retrieval: bool | None = None
     product_category: str | None = None
     doc_type: str | None = None
     dense_top_k: int | None = Field(default=None, ge=1, le=100)
@@ -77,6 +78,8 @@ class RetrievedChunkOut(BaseModel):
     chunk_type: str
     content: str
     score: float | None = None
+    parent_id: str | None = None
+    matched_child_ids: list[str] = Field(default_factory=list)
 
 
 class MessageOut(BaseModel):

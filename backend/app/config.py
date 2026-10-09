@@ -3,9 +3,12 @@
 所有外部依赖的地址、模型名、检索默认参数集中在此，便于替换与测试。
 """
 
+from __future__ import annotations
+
 from functools import lru_cache
 from typing import Literal
 
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +42,17 @@ class Settings(BaseSettings):
     admin_token: str = "change-me-admin-token"
     log_level: str = "INFO"
 
+    # --- 父子块入库（字符数）；父块仅存 MySQL，子块写入 Milvus ---
+    chunk_size: int = Field(default=500, ge=1)
+    chunk_overlap: int = Field(default=80, ge=0)
+    parent_chunk_size: int = Field(default=1500, ge=1)
+
+    @model_validator(mode="after")
+    def validate_chunk_sizes(self) -> Settings:
+        if self.parent_chunk_size < self.chunk_size:
+            raise ValueError("PARENT_CHUNK_SIZE 必须不小于 CHUNK_SIZE")
+        return self
+
     # --- 检索默认配置（可被 /api/chat 请求覆盖）---
     retrieval_mode: Literal["dense", "sparse", "hybrid"] = "hybrid"
     dense_top_k: int = 20
@@ -49,6 +63,7 @@ class Settings(BaseSettings):
     use_query_rewrite: bool = True
     use_intent: bool = True
     min_score_threshold: float = 0.0
+    use_parent_retrieval: bool = True
 
     # --- 可选：LangSmith ---
     langchain_tracing_v2: bool = False

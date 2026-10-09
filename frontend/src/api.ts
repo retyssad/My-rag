@@ -20,6 +20,8 @@ export interface RetrievedChunk {
   chunk_type: string
   content: string
   score: number | null
+  parent_id?: string | null
+  matched_child_ids?: string[]
 }
 
 export interface DocumentItem {
@@ -40,6 +42,7 @@ export interface ChatOptions {
   use_rerank?: boolean
   use_query_rewrite?: boolean
   use_intent?: boolean
+  use_parent_retrieval?: boolean
   product_category?: string
   doc_type?: string
 }

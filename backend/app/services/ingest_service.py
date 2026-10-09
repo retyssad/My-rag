@@ -14,8 +14,9 @@ from pathlib import Path
 
 from sqlalchemy import delete, select
 
-from app.chunking.chunker import ChunkingConfig, chunk_ir
-from app.db.models import Chunk, Document, DocumentStatus
+from app.chunking.chunker import ChunkingConfig, chunk_parent_child_ir
+from app.config import get_settings
+from app.db.models import Chunk, ChunkParent, Document, DocumentStatus, ParentChunk
 from app.db.session import session_scope
 from app.indexing.embedder import Embedder
 from app.indexing.milvus_store import (
@@ -75,6 +76,8 @@ def process_document(
             product_category = doc.product_category
             # 幂等：清掉旧的 MySQL chunk
             db.execute(delete(Chunk).where(Chunk.doc_id == doc_id))
+            db.execute(delete(ParentChunk).where(ParentChunk.doc_id == doc_id))
+            doc.chunk_count = 0
 
         # 幂等：清掉旧向量（放在 MySQL 事务外，避免长事务）
         delete_by_doc(client, doc_id, flush=flush)
@@ -84,7 +87,13 @@ def process_document(
             path = Path(__file__).resolve().parents[3] / source_path
 
         blocks = parse_file(path)
-        drafts = chunk_ir(blocks, chunk_config)
+        settings = get_settings()
+        chunk_config = chunk_config or ChunkingConfig(
+            chunk_size=settings.chunk_size, chunk_overlap=settings.chunk_overlap,
+            parent_chunk_size=settings.parent_chunk_size,
+        )
+        hierarchy = chunk_parent_child_ir(blocks, chunk_config)
+        drafts = hierarchy.children
         if not drafts:
             raise ValueError("解析后没有产生任何 chunk")
 
@@ -97,6 +106,7 @@ def process_document(
             meta = {
                 "heading_path": d.heading_path,
                 "chunk_type": d.chunk_type,
+                "parent_id": f"{doc_id}_p_{d.parent_index}" if d.parent_index is not None else None,
             }
             rows.append(
                 build_row(
@@ -128,7 +138,21 @@ def process_document(
 
         # 写 MySQL（事实来源）+ 置 done
         with session_scope() as db:
+            db.add_all([
+                ParentChunk(
+                    id=f"{doc_id}_p_{idx}", doc_id=doc_id, chunk_index=idx,
+                    content=p.content, chunk_type=p.chunk_type,
+                    heading_path=p.heading_path, token_count=p.token_count,
+                )
+                for idx, p in enumerate(hierarchy.parents)
+            ])
+            db.flush()
             db.add_all(chunk_records)
+            db.flush()
+            db.add_all([
+                ChunkParent(child_id=f"{doc_id}_{idx}", parent_id=f"{doc_id}_p_{d.parent_index}")
+                for idx, d in enumerate(drafts) if d.parent_index is not None
+            ])
             doc = db.get(Document, doc_id)
             doc.status = DocumentStatus.done
             doc.chunk_count = len(chunk_records)

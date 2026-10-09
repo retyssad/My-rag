@@ -24,6 +24,7 @@ const opts = ref({
   use_rerank: true,
   use_query_rewrite: true,
   use_intent: true,
+  use_parent_retrieval: true,
   product_category: '' as string,
   doc_type: '' as string,
 })
@@ -46,6 +47,7 @@ function buildOptions(): ChatOptions {
     use_rerank: opts.value.use_rerank,
     use_query_rewrite: opts.value.use_query_rewrite,
     use_intent: opts.value.use_intent,
+    use_parent_retrieval: opts.value.use_parent_retrieval,
   }
   if (opts.value.product_category) o.product_category = opts.value.product_category
   if (opts.value.doc_type) o.doc_type = opts.value.doc_type
@@ -128,6 +130,7 @@ const intentType: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'd
       <el-checkbox v-model="opts.use_rerank" size="small" label="重排序" />
       <el-checkbox v-model="opts.use_query_rewrite" size="small" label="查询改写" />
       <el-checkbox v-model="opts.use_intent" size="small" label="意图识别" />
+      <el-checkbox v-model="opts.use_parent_retrieval" size="small" label="扩展上下文" />
       <el-select v-model="opts.product_category" placeholder="全部类目" clearable style="width: 120px" size="small">
         <el-option label="手机" value="phone" />
         <el-option label="笔记本" value="laptop" />
@@ -169,6 +172,7 @@ const intentType: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'd
                   <div class="retrieved-head">
                     <el-tag size="small" type="info">{{ typeLabel[c.doc_type] || c.doc_type }}</el-tag>
                     <span class="doc-title">{{ c.doc_title }}</span>
+                    <el-tag v-if="c.parent_id" size="small" type="success">完整上下文</el-tag>
                     <el-tag v-if="c.chunk_type === 'table'" size="small" type="warning">表格</el-tag>
                     <span v-if="c.score != null" class="score">score={{ c.score.toFixed(3) }}</span>
                   </div>

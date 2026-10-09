@@ -5,6 +5,7 @@
 ## 功能
 
 - **多格式文档入库**：PDF / DOCX / HTML / Markdown → 统一中间表示 → 中文递归切分（**表格整表旁路**，不被切碎）
+- **父子块**：子块负责检索与重排序（默认 500 字 / 重叠 80 字），回查 MySQL 中的父块（默认 1500 字）作为生成上下文；按父块去重，表格保持完整
 - **混合检索**：稠密向量（HNSW/COSINE）+ 稀疏 BM25（Milvus 内置中文分析器），RRF 融合，可选重排序
 - **意图识别（软注入）**：识别商品咨询 / 售后政策 / 商品对比 / 闲聊，只调整检索参数而非切换链路；闲聊短路不检索
 - **元数据过滤**：按商品类目 / 文档类型做 pre-filter
@@ -28,12 +29,12 @@
 
 ```
                     ┌─────────────── 入库 ───────────────┐
-上传文档 → 解析(PDF/DOCX/HTML/MD → IR) → 切分(表格旁路) → Embedding → ┬→ MySQL(documents/chunks，事实来源)
-                                                                      └→ Milvus(dense + sparse，可重建索引)
+上传文档 → 解析(PDF/DOCX/HTML/MD → IR) → 父子块切分(表格旁路) → ┬→ MySQL(父块/子块/映射，事实来源)
+                                                            └→ 子块 Embedding → Milvus(dense + sparse)
 
                     ┌─────────────── 问答 ───────────────┐
 提问 → (多轮则 query 改写) → ┬→ dense 检索 top20 ─┐
-                            └→ sparse 检索 top20 ─┴→ RRF 融合 → rerank top5 → Prompt → LLM 流式 → 答案 + 引用
+                            └→ sparse 检索 top20 ─┴→ RRF 融合 → 子块 rerank → 回查父块/去重 top5 → Prompt → LLM 流式 → 答案 + 引用
 ```
 
 数据流与设计取舍见 `docs/adr/`；术语表见 `CONTEXT.md`。
@@ -72,6 +73,28 @@ docker compose -f docker/docker-compose.prod.yml up -d --build
 ```
 
 ## 检索消融评估
+
+### 父子块启用与旧知识库升级
+
+新上传文档默认生成父子块。父块和映射通过新增 `parent_chunks` / `chunk_parents` 表保存，启动时自动建表；已有 `chunks` 表和 Milvus collection 无需修改。`Document.chunk_count` 仍统计可检索子块数。
+
+旧文档没有父子映射时继续返回原 Chunk；通过上传页的「重试」可重新处理单篇文档，批量升级仓库中的知识库文档使用：
+
+```bash
+uv run python scripts/ingest_corpus.py --reprocess
+```
+
+该命令保留文档 ID，重新解析、切分并调用 embedding 更新索引。上传文档不在 manifest 中，需单篇重试。
+
+父块大小由 `PARENT_CHUNK_SIZE=1500` 配置，子块由 `CHUNK_SIZE=500` / `CHUNK_OVERLAP=80` 配置（字符数口径）。短标题或末尾事实句合并时父块可以略超目标，整表不受大小限制。子块仅在所属父块内切分。
+
+`USE_PARENT_RETRIEVAL=false` 或 `/api/chat` 的 `use_parent_retrieval=false` 可关闭回查；前端「扩展上下文」开关支持即时对比。启用时分数来自最优命中子块，生成和引用使用父块正文与父块 ID；SSE 检索结果附带 `parent_id` 和 `matched_child_ids`。
+
+```bash
+uv run python scripts/run_eval.py --configs hybrid_rerank,hybrid_rerank_parent --out data/eval/parent_report.json
+```
+
+这两档在同一子块索引上对比关闭/开启父块回查。父块档的片段命中衡量扩展上下文的覆盖率；需结合上下文长度判断收益，不能据此直接断言子块排序精度提高。以下历史结果来自原单层切分，父子块尚未做在线指标评估。
 
 评估集 `data/eval/gold.jsonl` 共 **132 条**，按难度分层：`simple`（事实型）/ `hard`（口语化）/ `cross`（跨文档对比）/ `filter`（需元数据过滤）/ `coref`（指代，配上下文）。
 标注采用**文本片段**而非 chunk id（见 ADR-0005），因此更换切分策略后评估集无需重标。
@@ -120,7 +143,7 @@ backend/app/
   config.py            # Settings（含检索默认参数）
   db/                  # SQLAlchemy 模型与会话（MySQL 为事实来源）
   parsing/parser.py    # PDF/DOCX/HTML/MD → 统一 IR（表格单独成块）
-  chunking/chunker.py  # IR → chunks（表格旁路 + 中文递归切分）
+  chunking/chunker.py  # IR → 父子块（表格旁路 + 中文递归切分）
   indexing/            # Embedder 抽象 + Milvus schema（dense + 内置 BM25 稀疏）
   retrieval/           # 三档检索 + rerank + query 改写
   generation/          # prompt 组装 + 引用解析 + LLM 流式
@@ -140,6 +163,7 @@ docs/adr/              # 架构决策记录
 - [0005](docs/adr/0005-gold-set-snippet-granularity.md) gold set 标注到文本片段而非 chunk id
 - [0006](docs/adr/0006-milvus-version-pin.md) Milvus 版本锁定 2.6 线
 - [0007](docs/adr/0007-intent-soft-injection.md) 意图识别采用软注入而非硬路由（含 policy 并集的实测教训）
+- [0008](docs/adr/0008-parent-child-chunks.md) 子块检索与重排序，父块回查供生成，旧文档兼容
 
 ## 测试
 

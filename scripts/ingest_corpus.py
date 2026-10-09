@@ -3,6 +3,7 @@
 用法：
     uv run python scripts/ingest_corpus.py          # 全量入库（跳过已 done）
     uv run python scripts/ingest_corpus.py --reset  # 清空 MySQL+Milvus 后重建
+    uv run python scripts/ingest_corpus.py --reprocess  # 保留文档 ID，重新生成父子块
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, "backend")
 
+from app.config import get_settings  # noqa: E402
 from app.db.models import Base, Document, DocumentStatus  # noqa: E402
 from app.db.session import engine, session_scope  # noqa: E402
 from app.indexing.milvus_store import (  # noqa: E402
@@ -31,6 +33,7 @@ RAW = ROOT / "data" / "raw"
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--reset", action="store_true", help="清空后重建")
+    ap.add_argument("--reprocess", action="store_true", help="保留文档 ID，重新处理已有文档（生成父子块）")
     ap.add_argument("--limit", type=int, default=0, help="仅处理前 N 篇（调试用）")
     args = ap.parse_args()
 
@@ -41,8 +44,9 @@ def main() -> int:
 
         with session_scope() as db:
             db.execute(delete(Document))
-        if client.has_collection("chunks"):
-            client.drop_collection("chunks")
+        collection = get_settings().milvus_collection
+        if client.has_collection(collection):
+            client.drop_collection(collection)
         print("已清空 MySQL documents 与 Milvus collection")
     ensure_collection(client)
 
@@ -60,19 +64,24 @@ def main() -> int:
                 select(Document.source_path).where(Document.status == DocumentStatus.done)
             ).all()
         }
+        existing_ids = dict(db.execute(
+            select(Document.source_path, Document.id).order_by(Document.id)
+        ).all())
 
-    todo = [m for m in manifest if m["source_path"] not in done_paths]
+    todo = [m for m in manifest if args.reprocess or m["source_path"] not in done_paths]
     print(f"待入库 {len(todo)} / {len(manifest)} 篇")
 
     ok, fail = 0, 0
     t0 = time.time()
     for i, m in enumerate(todo, 1):
-        doc_id = create_document(
-            title=m["title"],
-            doc_type=m["doc_type"],
-            product_category=m["product_category"],
-            source_path=m["source_path"],
-        )
+        doc_id = existing_ids.get(m["source_path"])
+        if doc_id is None:
+            doc_id = create_document(
+                title=m["title"],
+                doc_type=m["doc_type"],
+                product_category=m["product_category"],
+                source_path=m["source_path"],
+            )
         # 批量模式：不逐篇 flush，最后统一 flush（否则每篇多等数秒）
         process_document(doc_id, flush=False)
         with session_scope() as db:
@@ -99,7 +108,7 @@ def main() -> int:
         from sqlalchemy import func, select
 
         total_chunks = db.scalar(select(func.count()).select_from(Document.__table__))
-    milvus_rows = client.query("chunks", filter="", output_fields=["count(*)"])[0]["count(*)"]
+    milvus_rows = client.query(get_settings().milvus_collection, filter="", output_fields=["count(*)"])[0]["count(*)"]
     print(f"文档数 {total_chunks} | Milvus 行数 {milvus_rows}")
     return 0 if fail == 0 else 1
 

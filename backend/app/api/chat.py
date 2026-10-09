@@ -64,6 +64,8 @@ async def chat(req: ChatRequest):
         cfg.use_query_rewrite = req.use_query_rewrite
     if req.use_intent is not None:
         cfg.use_intent = req.use_intent
+    if req.use_parent_retrieval is not None:
+        cfg.use_parent_retrieval = req.use_parent_retrieval
     if req.product_category:
         cfg.product_category = req.product_category
     if req.doc_type:
@@ -152,6 +154,8 @@ async def chat(req: ChatRequest):
                     "doc_title": c.doc_title,
                     "doc_type": c.doc_type,
                     "chunk_type": c.chunk_type,
+                    "parent_id": c.parent_id,
+                    "matched_child_ids": c.matched_child_ids,
                     "content": c.content,
                     "score": c.score,
                 }
